@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Copy Drawing Game</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial;
+        background: #f3f3f3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 20px;
+    }
+    .container {
+        display: flex;
+        gap: 40px;
+        margin-top: 20px;
+    }
+    canvas {
+        background: white;
+        border: 3px solid #222;
+        border-radius: 10px;
+    }
+    #winBox {
+        margin-top: 20px;
+        font-size: 36px;
+        font-weight: bold;
+        color: #2c7a28;
+        display: none;
+        animation: pop 0.5s ease;
+    }
+    @keyframes pop {
+        from { transform: scale(0.5); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 8px;
+        border: none;
+        background: #222;
+        color: white;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Copy The Drawing</h1>
+
+<div class="container">
+    <canvas id="model" width="300" height="300"></canvas>
+    <canvas id="player" width="300" height="300"></canvas>
+</div>
+
+<button onclick="checkWin()">Check</button>
+
+<div id="winBox">Shape – Forge – Craft</div>
+
+<script>
+/* ------------ MODEL DRAWING ------------ */
+const model = document.getElementById("model");
+const m = model.getContext("2d");
+
+// Example drawing: a simple house
+m.lineWidth = 4;
+m.strokeStyle = "black";
+
+// Square
+m.strokeRect(80, 120, 140, 120);
+
+// Roof
+m.beginPath();
+m.moveTo(80, 120);
+m.lineTo(150, 60);
+m.lineTo(220, 120);
+m.closePath();
+m.stroke();
+
+/* ------------ PLAYER DRAWING ------------ */
+const player = document.getElementById("player");
+const p = player.getContext("2d");
+
+let drawing = false;
+
+player.addEventListener("mousedown", () => {
+    drawing = true;
+    p.beginPath();
+});
+
+player.addEventListener("mouseup", () => {
+    drawing = false;
+    p.beginPath();
+});
+
+player.addEventListener("mouseleave", () => {
+    drawing = false;
+    p.beginPath();
+});
+
+player.addEventListener("mousemove", (e) => {
+    if (!drawing) return;
+
+    const rect = player.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    p.lineWidth = 4;
+    p.lineCap = "round";
+    p.strokeStyle = "black";
+
+    p.lineTo(x, y);
+    p.stroke();
+});
+
+/* ------------ WIN CHECK ------------ */
+function checkWin() {
+    const modelData = m.getImageData(0, 0, 300, 300).data;
+    const playerData = p.getImageData(0, 0, 300, 300).data;
+
+    let diff = 0;
+
+    // Count how many pixels are different
+    for (let i = 0; i < modelData.length; i += 4) {
+        const modelPx = modelData[i] + modelData[i+1] + modelData[i+2];
+        const playerPx = playerData[i] + playerData[i+1] + playerData[i+2];
+
+        if (Math.abs(modelPx - playerPx) > 80) {
+            diff++;
+        }
+    }
+
+    // Threshold: allow ~85% similarity
+    if (diff < 25000) {
+        document.getElementById("winBox").style.display = "block";
+    } else {
+        alert("Not close enough! Try again.");
+    }
+}
+</script>
+
+</body>
+</html>
